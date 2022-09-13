@@ -48,7 +48,7 @@ jobs:
 
       - name: 'Task'
         run: |
-          psql -h localhost -p 5758 -c "select * from users"
+          psql -h localhost -p 15432 -c "select 42"
 
       - name: 'Delete SDM Service Account'
         uses: strongdm/delete-sa-gh-action@v1.0.0
