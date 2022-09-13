@@ -48,6 +48,8 @@ jobs:
 
       - name: 'Task'
         run: |
+          ./sdm connect all
+          ./sdm status
           psql -h localhost -p 15432 -c "select 42"
 
       - name: 'Delete SDM Service Account'
