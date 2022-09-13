@@ -1,0 +1,61 @@
+name: Access Control Pipeline
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+jobs:
+  generate-random-key:
+    runs-on: ubuntu-latest
+    outputs:
+      random-key: ${{ steps.random-key-generator.outputs.random-key }}
+    steps:
+      - name: 'Generate Access Granter random key'
+        id: random-key-generator
+        run: |
+          export RANDOM_KEY=$(echo $(python -c "import uuid ; print(uuid.uuid4())"))
+          echo "::set-output name=random-key::$RANDOM_KEY"
+          echo "###random_access_key=$RANDOM_KEY###"
+        shell: bash
+
+  access-control:
+    needs: generate-random-key
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Create SDM Service Account'
+        id: create-sa
+        uses: strongdm/create-sa-gh-action@v1.0.3
+        with:
+          run-id: ${{ github.run_id }}
+          random-key: ${{ needs.generate-random-key.outputs.random-key }}
+          random-key-job-name: generate-random-key
+          secret: ${{ secrets.SECRET }}
+          server-host: ${{ secrets.SERVER_HOST }}
+      
+      - name: 'SDM Config'
+        run: |
+          curl -J -O -L https://app.strongdm.com/releases/cli/linux
+          unzip sdmcli_*_linux_amd64.zip
+          ./sdm listen --daemon &
+          until ./sdm ready &> /dev/null;
+          do
+            sleep 1
+            echo "waiting for SDM to start..."
+          done
+          echo "SDM has started."
+          ./sdm status
+        env:
+          SDM_ADMIN_TOKEN: ${{ steps.create-sa.outputs.temp-token }}
+
+      - name: 'Task'
+        run: |
+          psql -h localhost -p 5758 -c "select * from users"
+
+      - name: 'Delete SDM Service Account'
+        uses: strongdm/delete-sa-gh-action@v1.0.0
+        with:
+          account-id: ${{ steps.create-sa.outputs.account-id }}
+          run-id: ${{ github.run_id }}
+          random-key: ${{ needs.generate-random-key.outputs.random-key }}
+          random-key-job-name: generate-random-key
+          secret: ${{ secrets.SECRET }}
+          server-host: ${{ secrets.SERVER_HOST }}
