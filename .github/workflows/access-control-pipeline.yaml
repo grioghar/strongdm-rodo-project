@@ -43,13 +43,14 @@ jobs:
           done
           echo "SDM has started."
           ./sdm status
+          ./sdm connect -all
+          ./sdm status
+          
         env:
           SDM_ADMIN_TOKEN: ${{ steps.create-sa.outputs.temp-token }}
 
       - name: 'Task'
         run: |
-          ./sdm connect all
-          ./sdm status
           psql -h localhost -p 15432 -c "select 42"
 
       - name: 'Delete SDM Service Account'
