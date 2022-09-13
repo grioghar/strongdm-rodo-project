@@ -42,17 +42,32 @@ jobs:
             echo "waiting for SDM to start..."
           done
           echo "SDM has started."
+          echo "strongDM Resources & Ports (sdm status):"
           ./sdm status
+          echo "Executing 'sdm connect -all':"
           ./sdm connect -all
+          echo ""
+          echo ""
+          echo "Again, strongDM Resources & Ports (sdm status):"
+          echo ""
+          echo ""
+          echo "Note the resources now show 'connected."
           ./sdm status
+          echo "Pausing for 5 seconds for readability."
+          sleep 5s
           
         env:
           SDM_ADMIN_TOKEN: ${{ steps.create-sa.outputs.temp-token }}
 
       - name: 'Task'
         run: |
+          echo "Using psql to query the postgres database with a simple 'SELECT 42'"
+          echo ""
+          echo ""
           psql -h localhost -p 15432 -c "select 42"
-
+          echo "Pausing again for 5 seconds for readability."          
+          sleep 5s
+          
       - name: 'Delete SDM Service Account'
         uses: strongdm/delete-sa-gh-action@v1.0.0
         with:
